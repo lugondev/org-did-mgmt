@@ -16,6 +16,7 @@ import {
   Activity,
   Plus,
   TrendingUp,
+  Users,
 } from 'lucide-react'
 
 interface StatCard {
@@ -142,6 +143,42 @@ export default function DashboardPage() {
               </Card>
             )
           })}
+        </div>
+
+        {/* Help and Resources Card */}
+        <div className="mb-6">
+          <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-green-800">
+                <Users className="h-5 w-5" />
+                Help and Resources
+              </CardTitle>
+              <CardDescription className="text-green-700">
+                Get support and learn more about DID management
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-green-200 flex items-center justify-center">
+                    <Shield className="h-6 w-6 text-green-700" />
+                  </div>
+                  <div>
+                    <p className="text-base font-semibold text-green-800">
+                      Need Help?
+                    </p>
+                    <p className="text-sm text-green-700">
+                      Access documentation, community support, and expert
+                      assistance
+                    </p>
+                  </div>
+                </div>
+                <Button className="bg-green-600 hover:bg-green-700 text-white">
+                  Get Started
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
