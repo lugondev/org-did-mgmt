@@ -1,8 +1,18 @@
 'use client'
 
-import { Bell } from 'lucide-react'
+import { Bell, LogOut, User } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useSession, signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 
 interface HeaderProps {
@@ -11,8 +21,30 @@ interface HeaderProps {
 
 /**
  * Header component with logo, test mode toggle, and user info
+ * Integrates with NextAuth for user authentication
  */
 export function Header({ className }: HeaderProps) {
+  const { data: session, status } = useSession()
+
+  /**
+   * Handle user sign out
+   */
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/auth/signin' })
+  }
+
+  /**
+   * Get user initials for avatar fallback
+   */
+  const getUserInitials = (name: string | null | undefined) => {
+    if (!name) return 'U'
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
   return (
     <header className={cn('didmgmt-header h-16 px-6', className)}>
       <div className="flex h-full items-center justify-between">
@@ -54,22 +86,52 @@ export function Header({ className }: HeaderProps) {
           </button>
 
           {/* User info */}
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <div className="text-sm font-medium text-didmgmt-text-primary">
-                Gulon
-              </div>
-              <div className="text-xs text-didmgmt-text-secondary">
-                Gulon's Team
-              </div>
+          {status === 'loading' ? (
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 animate-pulse rounded-full bg-gray-200" />
             </div>
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="/placeholder-avatar.jpg" alt="Gulon" />
-              <AvatarFallback className="bg-didmgmt-blue text-white text-sm">
-                LL
-              </AvatarFallback>
-            </Avatar>
-          </div>
+          ) : session?.user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-3 p-2">
+                  <div className="text-right">
+                    <div className="text-sm font-medium text-didmgmt-text-primary">
+                      {session.user.name || 'User'}
+                    </div>
+                    <div className="text-xs text-didmgmt-text-secondary">
+                      {session.user.email || 'No email'}
+                    </div>
+                  </div>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage 
+                      src={session.user.image || ''} 
+                      alt={session.user.name || 'User'} 
+                    />
+                    <AvatarFallback className="bg-didmgmt-blue text-white text-sm">
+                      {getUserInitials(session.user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Hồ sơ</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Đăng xuất</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button asChild variant="default" size="sm">
+              <a href="/auth/signin">Đăng nhập</a>
+            </Button>
+          )}
         </div>
       </div>
     </header>
