@@ -13,7 +13,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "tsx prisma/seed-ecosystem.ts",
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
@@ -21,7 +21,7 @@
     "deploy:prod": "./scripts/deploy.sh --prod"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed-ecosystem.ts"
   },
   "dependencies": {
     "@digitalcredentials/did-io": "^1.0.2",
