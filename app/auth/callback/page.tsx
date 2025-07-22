@@ -5,13 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle, XCircle, Loader2, AlertCircle } from 'lucide-react'
+import { Suspense } from 'react'
 
 /**
- * OAuth2 callback processing page
- * This page shows the status while NextAuth processes the OAuth callback
- * Note: NextAuth handles the actual callback at /api/auth/callback/[provider]
+ * OAuth2 callback content component
  */
-export default function CallbackPage() {
+function CallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session, status: sessionStatus } = useSession()
@@ -175,5 +174,18 @@ export default function CallbackPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+/**
+ * OAuth2 callback processing page
+ * This page shows the status while NextAuth processes the OAuth callback
+ * Note: NextAuth handles the actual callback at /api/auth/callback/[provider]
+ */
+export default function CallbackPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CallbackContent />
+    </Suspense>
   )
 }

@@ -15,10 +15,10 @@ const createInvitationSchema = z.object({
 // GET /api/organizations/[id]/invitations - Get organization invitations
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id: organizationId } = await params;
     const userId = request.headers.get('x-user-id') || 'temp-user-id';
     const status = request.nextUrl.searchParams.get('status');
 
@@ -76,10 +76,10 @@ export async function GET(
 // POST /api/organizations/[id]/invitations - Create invitation
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id: organizationId } = await params;
     const userId = request.headers.get('x-user-id') || 'temp-user-id';
 
     // Check if user has permission to invite members
@@ -208,10 +208,10 @@ export async function POST(
 // DELETE /api/organizations/[id]/invitations/[invitationId] - Cancel invitation
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id: organizationId } = await params;
     const userId = request.headers.get('x-user-id') || 'temp-user-id';
     const invitationId = request.nextUrl.searchParams.get('invitationId');
 

@@ -16,12 +16,12 @@ const updateWebhookSchema = z.object({
 // GET /api/webhooks/[id] - Get specific webhook
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const webhook = await prisma.webhook.findUnique({
       where: {
-        id: params.id
+        id: (await params).id
       }
     })
 
@@ -45,7 +45,7 @@ export async function GET(
 // PUT /api/webhooks/[id] - Update webhook
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
@@ -54,7 +54,7 @@ export async function PUT(
     // Check if webhook exists
     const existingWebhook = await prisma.webhook.findUnique({
       where: {
-        id: params.id
+        id: (await params).id
       }
     })
 
@@ -71,7 +71,7 @@ export async function PUT(
         where: {
           url: validatedData.url,
           id: {
-            not: params.id
+            not: (await params).id
           }
         }
       })
@@ -86,7 +86,7 @@ export async function PUT(
 
     const webhook = await prisma.webhook.update({
       where: {
-        id: params.id
+        id: (await params).id
       },
       data: validatedData
     })
@@ -111,13 +111,13 @@ export async function PUT(
 // DELETE /api/webhooks/[id] - Delete webhook
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if webhook exists
     const existingWebhook = await prisma.webhook.findUnique({
       where: {
-        id: params.id
+        id: (await params).id
       }
     })
 
@@ -132,12 +132,12 @@ export async function DELETE(
     await prisma.$transaction([
       prisma.webhookLog.deleteMany({
         where: {
-          webhookId: params.id
+          webhookId: (await params).id
         }
       }),
       prisma.webhook.delete({
         where: {
-          id: params.id
+          id: (await params).id
         }
       })
     ])

@@ -4,13 +4,13 @@ import { prisma } from '@/lib/prisma'
 // POST /api/webhooks/[id]/test - Send test webhook
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if webhook exists
     const webhook = await prisma.webhook.findUnique({
       where: {
-        id: params.id
+        id: (await params).id
       }
     })
 

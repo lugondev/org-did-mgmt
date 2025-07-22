@@ -7,10 +7,10 @@ import { prisma } from '@/lib/prisma'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { did: string } }
+  { params }: { params: Promise<{ did: string }> }
 ) {
   try {
-    const { did } = params
+    const { did } = await params
     
     if (!did) {
       return NextResponse.json({ error: 'DID parameter is required' }, { status: 400 })
@@ -48,10 +48,10 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { did: string } }
+  { params }: { params: Promise<{ did: string }> }
 ) {
   try {
-    const { did } = params
+    const { did } = await params
     const body = await request.json()
     const { status } = body
     
@@ -107,10 +107,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { did: string } }
+  { params }: { params: Promise<{ did: string }> }
 ) {
   try {
-    const { did } = params
+    const { did } = await params
     
     if (!did) {
       return NextResponse.json({ error: 'DID parameter is required' }, { status: 400 })

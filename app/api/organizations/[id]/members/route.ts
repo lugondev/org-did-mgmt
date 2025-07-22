@@ -18,10 +18,10 @@ const updateMemberSchema = z.object({
 // GET /api/organizations/[id]/members - Get organization members
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id: organizationId } = await params;
     const userId = request.headers.get('x-user-id') || 'temp-user-id';
 
     // Check if user has access to this organization
@@ -72,10 +72,10 @@ export async function GET(
 // POST /api/organizations/[id]/members - Add member to organization
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id: organizationId } = await params;
     const userId = request.headers.get('x-user-id') || 'temp-user-id';
 
     // Check if user has permission to add members
@@ -179,10 +179,10 @@ export async function POST(
 // PUT /api/organizations/[id]/members/[memberId] - Update member
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id: organizationId } = await params;
     const userId = request.headers.get('x-user-id') || 'temp-user-id';
     const memberId = request.nextUrl.searchParams.get('memberId');
 
@@ -266,10 +266,10 @@ export async function PUT(
 // DELETE /api/organizations/[id]/members/[memberId] - Remove member
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id: organizationId } = await params;
     const userId = request.headers.get('x-user-id') || 'temp-user-id';
     const memberId = request.nextUrl.searchParams.get('memberId');
 

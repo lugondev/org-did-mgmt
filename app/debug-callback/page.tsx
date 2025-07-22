@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Copy, ExternalLink } from 'lucide-react'
+import { Suspense } from 'react'
 
 /**
- * Debug page to manually test OAuth2 callback with code and state
+ * Debug callback content component
  */
-export default function DebugCallbackPage() {
+function DebugCallbackContent() {
   const searchParams = useSearchParams()
   const [urlParams, setUrlParams] = useState<Record<string, string>>({})
   const [manualTest, setManualTest] = useState({
@@ -166,5 +167,16 @@ export default function DebugCallbackPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+/**
+ * Debug callback page with Suspense boundary
+ */
+export default function DebugCallbackPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DebugCallbackContent />
+    </Suspense>
   )
 }

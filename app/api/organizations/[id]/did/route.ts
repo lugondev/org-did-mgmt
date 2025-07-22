@@ -9,9 +9,10 @@ import { authOptions } from '@/lib/auth'
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: organizationId } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -28,7 +29,7 @@ export async function POST(
     // Check if user is member of organization with admin/owner role
     const member = await prisma.organizationMember.findFirst({
       where: {
-        organizationId: params.id,
+        organizationId,
         userId: user.id,
         role: { in: ['owner', 'admin'] }
       }
@@ -43,7 +44,7 @@ export async function POST(
 
     // Check if organization already has a DID
     const organization = await prisma.organization.findUnique({
-      where: { id: params.id }
+      where: { id: organizationId }
     })
 
     if (!organization) {
@@ -65,18 +66,18 @@ export async function POST(
 
     // Update organization with DID
     const updatedOrg = await prisma.organization.update({
-      where: { id: params.id },
+      where: { id: organizationId },
       data: { did: didDocument.did }
     })
 
     // Log activity
     await prisma.activityLog.create({
       data: {
-        organizationId: params.id,
+        organizationId,
         userId: user.id,
         action: 'create_organization_did',
         resource: 'organization',
-        resourceId: params.id,
+        resourceId: organizationId,
         details: {
           did: didDocument.did,
           method: didDocument.method
@@ -109,8 +110,9 @@ export async function POST(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: organizationId } = await params
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.email) {
@@ -128,7 +130,7 @@ export async function GET(
     // Check if user is member of organization
     const member = await prisma.organizationMember.findFirst({
       where: {
-        organizationId: params.id,
+        organizationId,
         userId: user.id
       }
     })
@@ -141,7 +143,7 @@ export async function GET(
     }
 
     const organization = await prisma.organization.findUnique({
-      where: { id: params.id }
+      where: { id: organizationId }
     })
 
     if (!organization) {

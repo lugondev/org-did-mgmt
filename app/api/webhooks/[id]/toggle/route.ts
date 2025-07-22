@@ -11,7 +11,7 @@ const toggleWebhookSchema = z.object({
 // PATCH /api/webhooks/[id]/toggle - Toggle webhook active status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
@@ -20,7 +20,7 @@ export async function PATCH(
     // Check if webhook exists
     const existingWebhook = await prisma.webhook.findUnique({
       where: {
-        id: params.id
+        id: (await params).id
       }
     })
 
@@ -33,7 +33,7 @@ export async function PATCH(
 
     const webhook = await prisma.webhook.update({
       where: {
-        id: params.id
+        id: (await params).id
       },
       data: {
         isActive,

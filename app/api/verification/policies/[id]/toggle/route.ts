@@ -7,7 +7,7 @@ interface TogglePolicyRequest {
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body: TogglePolicyRequest = await request.json()
@@ -22,7 +22,7 @@ export async function PATCH(
 
     // Check if policy exists
     const existingPolicy = await prisma.verificationPolicy.findUnique({
-      where: { id: params.id }
+      where: { id: (await params).id }
     })
 
     if (!existingPolicy) {
@@ -33,7 +33,7 @@ export async function PATCH(
     }
 
     const updatedPolicy = await prisma.verificationPolicy.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         status: isActive ? 'active' : 'inactive'
       }

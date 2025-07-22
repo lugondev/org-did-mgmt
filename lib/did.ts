@@ -1,4 +1,4 @@
-import { Ed25519VerificationKey2020 } from '@digitalcredentials/ed25519-signature-2020'
+import { Ed25519VerificationKey2020 } from '@digitalcredentials/ed25519-verification-key-2020'
 import { Ed25519Signature2020 } from '@digitalcredentials/ed25519-signature-2020'
 import * as vc from '@digitalcredentials/vc'
 import { prisma } from './prisma'
@@ -25,16 +25,16 @@ export async function generateDIDKey(): Promise<{
     ],
     id: did,
     verificationMethod: [{
-      id: `${did}#${keyPair.id}`,
+      id: `${did}#${keyPair.id || 'key-1'}`,
       type: 'Ed25519VerificationKey2020',
       controller: did,
       publicKeyMultibase: keyPair.publicKeyMultibase
     }],
-    authentication: [`${did}#${keyPair.id}`],
-    assertionMethod: [`${did}#${keyPair.id}`],
-    keyAgreement: [`${did}#${keyPair.id}`],
-    capabilityInvocation: [`${did}#${keyPair.id}`],
-    capabilityDelegation: [`${did}#${keyPair.id}`]
+    authentication: [`${did}#${keyPair.id || 'key-1'}`],
+    assertionMethod: [`${did}#${keyPair.id || 'key-1'}`],
+    keyAgreement: [`${did}#${keyPair.id || 'key-1'}`],
+    capabilityInvocation: [`${did}#${keyPair.id || 'key-1'}`],
+    capabilityDelegation: [`${did}#${keyPair.id || 'key-1'}`]
   }
   
   return { did, keyPair, document }
@@ -56,24 +56,31 @@ export async function createDIDDocument(userId?: string): Promise<{
       document,
       method: 'did:key',
       controller: did,
-      userId,
-      keys: {
-        create: {
-          keyId: keyPair.id,
-          type: 'Ed25519VerificationKey2020',
-          controller: did,
-          publicKeyMultibase: keyPair.publicKeyMultibase,
-          privateKeyMultibase: keyPair.privateKeyMultibase,
-          purpose: ['authentication', 'assertionMethod', 'keyAgreement', 'capabilityInvocation', 'capabilityDelegation']
-        }
-      }
-    },
-    include: {
-      keys: true
+      userId
     }
   })
+
+  // Create the cryptographic key separately
+  const keyId = keyPair.id || `key-${Date.now()}`
+  await prisma.cryptographicKey.create({
+    data: {
+      keyId,
+      type: 'Ed25519VerificationKey2020',
+      controller: did,
+      publicKeyMultibase: keyPair.publicKeyMultibase,
+      privateKeyMultibase: keyPair.privateKeyMultibase,
+      purpose: ['authentication', 'assertionMethod', 'keyAgreement', 'capabilityInvocation', 'capabilityDelegation'],
+      didDocumentId: didDocument.id
+    }
+  })
+
+  // Fetch the complete document with keys
+  const completeDidDocument = await prisma.dIDDocument.findUnique({
+    where: { id: didDocument.id },
+    include: { keys: true }
+  })
   
-  return { didDocument, keyPair }
+  return { didDocument: completeDidDocument, keyPair }
 }
 
 /**

@@ -18,10 +18,10 @@ const activityQuerySchema = z.object({
 // GET /api/organizations/[id]/activity - Get organization activity logs
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id: organizationId } = await params;
     const userId = request.headers.get('x-user-id') || 'temp-user-id';
 
     // Check if user has access to this organization
@@ -133,10 +133,10 @@ export async function GET(
 // POST /api/organizations/[id]/activity - Create activity log entry
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id: organizationId } = await params;
     const userId = request.headers.get('x-user-id') || 'temp-user-id';
     const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';
@@ -195,147 +195,6 @@ export async function POST(
     console.error('Error creating activity log:', error);
     return NextResponse.json(
       { error: 'Failed to create activity log' },
-      { status: 500 }
-    );
-  }
-}
-
-// GET /api/organizations/[id]/activity/stats - Get activity statistics
-export async function GET_STATS(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const organizationId = params.id;
-    const userId = request.headers.get('x-user-id') || 'temp-user-id';
-
-    // Check if user has access to this organization
-    const membership = await prisma.organizationMember.findFirst({
-      where: {
-        organizationId,
-        userId,
-        status: 'active'
-      }
-    });
-
-    if (!membership) {
-      return NextResponse.json(
-        { error: 'Access denied' },
-        { status: 403 }
-      );
-    }
-
-    const now = new Date();
-    const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-    const [totalActivities, last24HoursCount, last7DaysCount, last30DaysCount, topActions, topUsers] = await Promise.all([
-      // Total activities
-      prisma.activityLog.count({
-        where: { organizationId }
-      }),
-      
-      // Last 24 hours
-      prisma.activityLog.count({
-        where: {
-          organizationId,
-          timestamp: { gte: last24Hours }
-        }
-      }),
-      
-      // Last 7 days
-      prisma.activityLog.count({
-        where: {
-          organizationId,
-          timestamp: { gte: last7Days }
-        }
-      }),
-      
-      // Last 30 days
-      prisma.activityLog.count({
-        where: {
-          organizationId,
-          timestamp: { gte: last30Days }
-        }
-      }),
-      
-      // Top actions (last 30 days)
-      prisma.activityLog.groupBy({
-        by: ['action'],
-        where: {
-          organizationId,
-          timestamp: { gte: last30Days }
-        },
-        _count: {
-          action: true
-        },
-        orderBy: {
-          _count: {
-            action: 'desc'
-          }
-        },
-        take: 10
-      }),
-      
-      // Top users (last 30 days)
-      prisma.activityLog.groupBy({
-        by: ['userId'],
-        where: {
-          organizationId,
-          timestamp: { gte: last30Days },
-          userId: { not: null }
-        },
-        _count: {
-          userId: true
-        },
-        orderBy: {
-          _count: {
-            userId: 'desc'
-          }
-        },
-        take: 10
-      })
-    ]);
-
-    // Get user details for top users
-    const userIds = topUsers.map(u => u.userId).filter(Boolean) as string[];
-    const users = await prisma.user.findMany({
-      where: {
-        id: { in: userIds }
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true
-      }
-    });
-
-    const topUsersWithDetails = topUsers.map(userStat => {
-      const user = users.find(u => u.id === userStat.userId);
-      return {
-        user,
-        count: userStat._count.userId
-      };
-    });
-
-    return NextResponse.json({
-      stats: {
-        totalActivities,
-        last24Hours: last24HoursCount,
-        last7Days: last7DaysCount,
-        last30Days: last30DaysCount,
-        topActions: topActions.map(action => ({
-          action: action.action,
-          count: action._count.action
-        })),
-        topUsers: topUsersWithDetails
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching activity statistics:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch activity statistics' },
       { status: 500 }
     );
   }

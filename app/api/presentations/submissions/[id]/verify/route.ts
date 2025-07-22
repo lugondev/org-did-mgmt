@@ -6,7 +6,7 @@ import { verifyPresentation } from '@/lib/did'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -14,7 +14,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const submissionId = params.id
+    const submissionId = (await params).id
 
     // Get user
     const user = await prisma.user.findUnique({
