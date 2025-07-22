@@ -1,0 +1,24 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "outputDirectory": ".next",
+  "env": {
+    "NEXTAUTH_URL": "@nextauth_url",
+    "NEXTAUTH_SECRET": "@nextauth_secret",
+    "DATABASE_URL": "@database_url",
+    "NEXT_PUBLIC_AUTHSYS_BASE_URL": "@next_public_authsys_base_url",
+    "NEXT_PUBLIC_CLIENT_ID": "@next_public_client_id",
+    "CLIENT_SECRET": "@client_secret",
+    "NEXT_PUBLIC_REDIRECT_URI": "@next_public_redirect_uri",
+    "NEXT_PUBLIC_SCOPE": "@next_public_scope",
+    "AUTHSYS_BASE_URL": "@authsys_base_url"
+  },
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "regions": ["sin1"]
+}

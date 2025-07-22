@@ -97,6 +97,44 @@ bun run build
 bun start
 ```
 
+## 🚀 Deployment
+
+### Deploy to Vercel (Recommended)
+
+This project is optimized for Vercel deployment with automatic CI/CD.
+
+#### Quick Deploy
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+npm run deploy
+
+# Deploy to production
+npm run deploy:prod
+```
+
+#### Environment Variables
+Set up these environment variables in your Vercel dashboard:
+
+```env
+NEXTAUTH_URL=https://your-app.vercel.app
+NEXTAUTH_SECRET=your-secure-secret
+DATABASE_URL=postgresql://...
+NEXT_PUBLIC_AUTHSYS_BASE_URL=https://your-auth-system.com
+NEXT_PUBLIC_CLIENT_ID=your-client-id
+CLIENT_SECRET=your-client-secret
+NEXT_PUBLIC_REDIRECT_URI=https://your-app.vercel.app/auth/callback
+```
+
+#### Automatic Deployment
+- **Preview**: Automatically deploys on pull requests
+- **Production**: Automatically deploys on push to `main` branch
+- **GitHub Actions**: Pre-configured workflow for CI/CD
+
+For detailed deployment instructions, see [README-DEPLOYMENT.md](./README-DEPLOYMENT.md).
+
 ## 📱 Pages Overview
 
 | Page | Description | Status |

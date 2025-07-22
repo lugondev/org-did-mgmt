@@ -38,6 +38,11 @@ const navigationItems: NavItem[] = [
     icon: Home,
   },
   {
+    title: 'DID Management',
+    href: '/did',
+    icon: Shield,
+  },
+  {
     title: 'Credentials',
     href: '/credentials',
     icon: CreditCard,
@@ -114,6 +119,12 @@ const navigationItems: NavItem[] = [
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
   const [expandedItems, setExpandedItems] = useState<string[]>([])
+  
+  // Handle speak to expert
+  const handleSpeakToExpert = () => {
+    // Open support page in new tab or navigate to help section
+    window.open('/help/support', '_blank')
+  }
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev =>
@@ -132,7 +143,10 @@ export function Sidebar({ className }: SidebarProps) {
       <div className="p-4">
         {/* Speak to an Expert */}
         <div className="mb-6">
-          <button className="flex w-full items-center gap-2 rounded-lg border border-border bg-background p-3 text-sm hover:bg-accent">
+          <button 
+            className="flex w-full items-center gap-2 rounded-lg border border-border bg-background p-3 text-sm hover:bg-accent"
+            onClick={handleSpeakToExpert}
+          >
             <MessageSquare className="h-4 w-4" />
             <span>Speak to an Expert</span>
           </button>

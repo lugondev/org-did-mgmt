@@ -90,6 +90,42 @@ const recentActivities = [
 ]
 
 export default function DashboardPage() {
+  // Handle quick action
+  const handleQuickAction = () => {
+    // Navigate to credentials page for quick actions
+    window.location.href = '/credentials'
+  }
+
+  // Handle get started
+  const handleGetStarted = () => {
+    // Navigate to help page for resources
+    window.location.href = '/help'
+  }
+
+  // Handle issue credential
+  const handleIssueCredential = () => {
+    // Navigate to credentials page to issue new credential
+    window.location.href = '/credentials'
+  }
+
+  // Handle create schema
+  const handleCreateSchema = () => {
+    // Navigate to schemas page to create new schema
+    window.location.href = '/schemas'
+  }
+
+  // Handle verify credential
+  const handleVerifyCredential = () => {
+    // Navigate to verification page
+    window.location.href = '/verification'
+  }
+
+  // Handle view analytics
+  const handleViewAnalytics = () => {
+    // Navigate to activity page for analytics
+    window.location.href = '/activity'
+  }
+
   return (
     <div className="flex h-full flex-col">
       {/* Page Header */}
@@ -103,7 +139,10 @@ export default function DashboardPage() {
               Welcome back! Here's what's happening with your credentials.
             </p>
           </div>
-          <Button className="bg-didmgmt-blue hover:bg-didmgmt-blue/90">
+          <Button 
+            className="bg-didmgmt-blue hover:bg-didmgmt-blue/90"
+            onClick={handleQuickAction}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Quick Action
           </Button>
@@ -173,7 +212,10 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 </div>
-                <Button className="bg-green-600 hover:bg-green-700 text-white">
+                <Button 
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  onClick={handleGetStarted}
+                >
                   Get Started
                 </Button>
               </div>
@@ -230,19 +272,35 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={handleIssueCredential}
+                >
                   <CreditCard className="mr-2 h-4 w-4" />
                   Issue New Credential
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={handleCreateSchema}
+                >
                   <Layers className="mr-2 h-4 w-4" />
                   Create Schema
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={handleVerifyCredential}
+                >
                   <Shield className="mr-2 h-4 w-4" />
                   Verify Credential
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={handleViewAnalytics}
+                >
                   <Activity className="mr-2 h-4 w-4" />
                   View Analytics
                 </Button>

@@ -10,6 +10,7 @@ import {
   Copy,
   Play,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -102,6 +103,46 @@ result = response.json()`,
 ]
 
 export default function DeveloperPage() {
+  const handleApiDocs = () => {
+    toast.info('API Documentation will be available soon!')
+  }
+
+  const handleGenerateApiKey = () => {
+    toast.info('API Key generation will be available soon!')
+  }
+
+  const handleGraphQLApi = () => {
+    toast.info('GraphQL API will be available soon!')
+  }
+
+  const handleOpenApiSpec = () => {
+    toast.info('OpenAPI Specification will be available soon!')
+  }
+
+  const handleTestWebhooks = () => {
+    toast.info('Webhook testing will be available soon!')
+  }
+
+  const handleWebhookGuide = () => {
+    toast.info('Webhook guide will be available soon!')
+  }
+
+  const handleApiExplorer = () => {
+    toast.info('API Explorer will be available soon!')
+  }
+
+  const handleCredentialSimulator = () => {
+    toast.info('Credential Simulator will be available soon!')
+  }
+
+  const handleSchemaBuilder = () => {
+    toast.info('Schema Builder will be available soon!')
+  }
+
+  const handleCopyCode = () => {
+    toast.success('Code copied to clipboard!')
+  }
+
   return (
     <div className="flex h-full flex-col">
       {/* Page Header */}
@@ -122,7 +163,7 @@ export default function DeveloperPage() {
                 API Docs
               </Link>
             </Button>
-            <Button className="bg-didmgmt-blue hover:bg-didmgmt-blue/90">
+            <Button className="bg-didmgmt-blue hover:bg-didmgmt-blue/90" onClick={handleGenerateApiKey}>
               <Key className="mr-2 h-4 w-4" />
               Generate API Key
             </Button>
@@ -220,11 +261,11 @@ export default function DeveloperPage() {
                         REST API Reference
                       </Link>
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button variant="outline" className="w-full justify-start" onClick={handleGraphQLApi}>
                       <Terminal className="mr-2 h-4 w-4" />
                       GraphQL API
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button variant="outline" className="w-full justify-start" onClick={handleOpenApiSpec}>
                       <ExternalLink className="mr-2 h-4 w-4" />
                       OpenAPI Spec
                     </Button>
@@ -255,11 +296,11 @@ export default function DeveloperPage() {
                         Manage Webhooks
                       </Link>
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button variant="outline" className="w-full justify-start" onClick={handleTestWebhooks}>
                       <Play className="mr-2 h-4 w-4" />
                       Test Webhooks
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button variant="outline" className="w-full justify-start" onClick={handleWebhookGuide}>
                       <Book className="mr-2 h-4 w-4" />
                       Webhook Guide
                     </Button>
@@ -307,15 +348,15 @@ export default function DeveloperPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button variant="outline" className="w-full justify-start" onClick={handleApiExplorer}>
                       <Terminal className="mr-2 h-4 w-4" />
                       API Explorer
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button variant="outline" className="w-full justify-start" onClick={handleCredentialSimulator}>
                       <Play className="mr-2 h-4 w-4" />
                       Credential Simulator
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button variant="outline" className="w-full justify-start" onClick={handleSchemaBuilder}>
                       <Code className="mr-2 h-4 w-4" />
                       Schema Builder
                     </Button>
@@ -378,7 +419,7 @@ export default function DeveloperPage() {
                         </CardTitle>
                         <CardDescription>{example.language}</CardDescription>
                       </div>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" onClick={handleCopyCode}>
                         <Copy className="mr-2 h-4 w-4" />
                         Copy
                       </Button>

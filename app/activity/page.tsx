@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import {
   Activity,
   CreditCard,
@@ -9,6 +10,8 @@ import {
   Clock,
   Filter,
   Download,
+  Calendar,
+  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -22,6 +25,16 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
 
 const activityStats = {
   totalActivities: 1234,
@@ -130,6 +143,112 @@ const getStatusColor = (status: string) => {
 }
 
 export default function ActivityPage() {
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filteredActivities, setFilteredActivities] = useState(recentActivities)
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    dateRange: 'all',
+    activityTypes: [] as string[],
+    statuses: [] as string[],
+    users: [] as string[]
+  })
+  
+  // Handle filter dialog
+  const handleFilter = () => {
+    setFilterDialogOpen(true)
+  }
+  
+  // Apply filters
+  const applyFilters = () => {
+    let filtered = recentActivities
+    
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(activity => 
+        activity.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        activity.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        activity.user.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+    
+    // Activity type filter
+    if (filters.activityTypes.length > 0) {
+      filtered = filtered.filter(activity => 
+        filters.activityTypes.includes(activity.type)
+      )
+    }
+    
+    // Status filter
+    if (filters.statuses.length > 0) {
+      filtered = filtered.filter(activity => 
+        filters.statuses.includes(activity.status)
+      )
+    }
+    
+    // User filter
+    if (filters.users.length > 0) {
+      filtered = filtered.filter(activity => 
+        filters.users.includes(activity.user)
+      )
+    }
+    
+    setFilteredActivities(filtered)
+    setFilterDialogOpen(false)
+  }
+  
+  // Clear filters
+  const clearFilters = () => {
+    setFilters({
+      dateRange: 'all',
+      activityTypes: [],
+      statuses: [],
+      users: []
+    })
+    setSearchTerm('')
+    setFilteredActivities(recentActivities)
+    setFilterDialogOpen(false)
+  }
+  
+  // Handle checkbox change
+  const handleCheckboxChange = (type: 'activityTypes' | 'statuses' | 'users', value: string, checked: boolean | 'indeterminate') => {
+    setFilters(prev => ({
+      ...prev,
+      [type]: checked === true
+        ? [...prev[type], value]
+        : prev[type].filter(item => item !== value)
+    }))
+  }
+
+  // Handle export
+  const handleExport = () => {
+    // Create CSV content
+    const csvContent = [
+      ['ID', 'Type', 'Title', 'Description', 'User', 'Timestamp', 'Status'],
+      ...filteredActivities.map(activity => [
+        activity.id,
+        activity.type,
+        activity.title,
+        activity.description,
+        activity.user,
+        activity.timestamp,
+        activity.status
+      ])
+    ].map(row => row.join(',')).join('\n')
+    
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `activities-${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="flex h-full flex-col">
       {/* Page Header */}
@@ -144,11 +263,11 @@ export default function ActivityPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleFilter}>
               <Filter className="mr-2 h-4 w-4" />
               Filter
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
@@ -223,7 +342,30 @@ export default function ActivityPage() {
               <TabsTrigger value="system">System</TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-4">
-              <Input placeholder="Search activities..." className="w-64" />
+              <Input 
+                placeholder="Search activities..." 
+                className="w-64" 
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  // Auto-apply search filter
+                  let filtered = recentActivities
+                  if (e.target.value) {
+                    filtered = filtered.filter(activity => 
+                      activity.title.toLowerCase().includes(e.target.value.toLowerCase()) ||
+                      activity.description.toLowerCase().includes(e.target.value.toLowerCase()) ||
+                      activity.user.toLowerCase().includes(e.target.value.toLowerCase())
+                    )
+                  }
+                  setFilteredActivities(filtered)
+                }}
+              />
+              {(searchTerm || filters.activityTypes.length > 0 || filters.statuses.length > 0 || filters.users.length > 0) && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  <X className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              )}
             </div>
           </div>
 
@@ -237,7 +379,16 @@ export default function ActivityPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentActivities.map(activity => {
+                  {filteredActivities.length === 0 ? (
+                    <div className="text-center py-8 text-didmgmt-text-secondary">
+                      <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No activities found matching your criteria</p>
+                      <Button variant="ghost" onClick={clearFilters} className="mt-2">
+                        Clear filters
+                      </Button>
+                    </div>
+                  ) : (
+                    filteredActivities.map(activity => {
                     const Icon = getActivityIcon(activity.type)
                     return (
                       <div
@@ -282,7 +433,8 @@ export default function ActivityPage() {
                         </div>
                       </div>
                     )
-                  })}
+                  })
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -298,7 +450,7 @@ export default function ActivityPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentActivities
+                  {filteredActivities
                     .filter(activity => activity.type.includes('credential'))
                     .map(activity => {
                       const Icon = getActivityIcon(activity.type)
@@ -429,6 +581,89 @@ export default function ActivityPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Filter Dialog */}
+      <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Filter Activities</DialogTitle>
+            <DialogDescription>
+              Filter activities by type, status, and user
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Activity Types */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">Activity Types</label>
+              <div className="space-y-2">
+                {['credential_issued', 'verification_request', 'schema_created', 'user_login', 'credential_revoked'].map(type => (
+                  <div key={type} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={type}
+                      checked={filters.activityTypes.includes(type)}
+                      onCheckedChange={(checked) => handleCheckboxChange('activityTypes', type, checked)}
+                    />
+                    <label htmlFor={type} className="text-sm capitalize">
+                      {type.replace('_', ' ')}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">Status</label>
+              <div className="space-y-2">
+                {['success', 'pending', 'warning', 'info'].map(status => (
+                  <div key={status} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={status}
+                      checked={filters.statuses.includes(status)}
+                      onCheckedChange={(checked) => handleCheckboxChange('statuses', status, checked)}
+                    />
+                    <label htmlFor={status} className="text-sm capitalize">
+                      {status}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Users */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">Users</label>
+              <div className="space-y-2">
+                {['System', 'Jane Smith', 'Admin', 'Gulon', 'Security Team'].map(user => (
+                  <div key={user} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={user}
+                      checked={filters.users.includes(user)}
+                      onCheckedChange={(checked) => handleCheckboxChange('users', user, checked)}
+                    />
+                    <label htmlFor={user} className="text-sm">
+                      {user}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={clearFilters}>
+              Clear All
+            </Button>
+            <Button onClick={() => {
+              applyFilters()
+              setFilterDialogOpen(false)
+            }}>
+              Apply Filters
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -1,0 +1,463 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model CredentialRequest {
+  id               String   @id @default(cuid())
+  fullName         String
+  email            String
+  phone            String?
+  dateOfBirth      DateTime?
+  address          String?
+  credentialType   String
+  organizationName String
+  purpose          String
+  additionalInfo   String?
+  status           String   @default("pending")
+  adminNotes       String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  documents        Document[]
+  
+  @@map("credential_requests")
+}
+
+model Document {
+  id                  String            @id @default(cuid())
+  fileName            String
+  fileSize            Int
+  fileType            String
+  fileUrl             String?
+  credentialRequestId String
+  createdAt           DateTime          @default(now())
+  
+  credentialRequest   CredentialRequest @relation(fields: [credentialRequestId], references: [id], onDelete: Cascade)
+  
+  @@map("documents")
+}
+
+model User {
+  id                    String                 @id @default(cuid())
+  email                 String                 @unique
+  name                  String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  
+  verificationRequests  VerificationRequest[]
+  didDocuments          DIDDocument[]
+  credentialSchemas     CredentialSchema[]
+  credentialTemplates   CredentialTemplate[]
+  presentationRequests  PresentationRequest[]
+  presentationSubmissions PresentationSubmission[]
+  organizationMemberships OrganizationMember[]
+  sentInvitations       OrganizationInvitation[] @relation("InvitationsSent")
+  createdApiKeys        OrganizationApiKey[]     @relation("ApiKeysCreated")
+  activityLogs          ActivityLog[]
+  
+  @@map("users")
+}
+
+model Credential {
+  id                    String                 @id @default(cuid())
+  type                  String
+  issuer                String?
+  issuerDIDId           String?                // Reference to issuer DID
+  schemaId              String?                // Reference to credential schema
+  credentialSubject     Json                   // The actual credential data
+  proof                 Json?                  // Cryptographic proof
+  issuedAt              DateTime?
+  expiresAt             DateTime?
+  data                  Json?                  // Legacy field, keep for compatibility
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  
+  verificationRequests  VerificationRequest[]
+  issuerDID             DIDDocument?           @relation("IssuerDID", fields: [issuerDIDId], references: [id], onDelete: SetNull)
+  schema                CredentialSchema?      @relation("CredentialSchema", fields: [schemaId], references: [id], onDelete: SetNull)
+  status                CredentialStatus?
+  
+  @@map("credentials")
+}
+
+model VerificationRequest {
+  id                    String   @id @default(cuid())
+  credentialId          String
+  requesterId           String
+  verificationPolicyId  String?
+  status                String   @default("pending")
+  metadata              Json?
+  reviewerId            String?
+  reviewNotes           String?
+  verificationResult    Json?
+  reviewedAt            DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  requester             User       @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  credential            Credential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+  
+  @@map("verification_requests")
+}
+
+model VerificationPolicy {
+  id                   String   @id @default(cuid())
+  name                 String   @unique
+  description          String?
+  credentialTypes      String[]
+  requiredAttributes   String[]
+  validityPeriod       Int      @default(365)
+  autoApprove          Boolean  @default(false)
+  requireManualReview  Boolean  @default(true)
+  status               String   @default("active")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  @@map("verification_policies")
+}
+
+model Partner {
+  id                   String              @id @default(cuid())
+  name                 String
+  type                 String              // Educational Institution, Enterprise, Healthcare, Government, Non-Profit
+  email                String              @unique
+  website              String?
+  description          String?
+  logo                 String?
+  status               String              @default("pending") // pending, connected, disconnected
+  credentialsExchanged Int                 @default(0)
+  lastActivity         DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  
+  connections          PartnerConnection[]
+  
+  @@map("partners")
+}
+
+model Network {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  type        String   @default("Public") // Public, Private
+  members     Int      @default(0)
+  isJoined    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("networks")
+}
+
+model PartnerConnection {
+  id          String    @id @default(cuid())
+  partnerId   String
+  status      String    @default("pending") // pending, approved, rejected
+  requestedBy String?   // User ID who requested the connection
+  approvedBy  String?   // User ID who approved the connection
+  approvedAt  DateTime? // When the connection was approved
+  rejectedBy  String?   // User ID who rejected the connection
+  rejectedAt  DateTime? // When the connection was rejected
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  partner     Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  
+  @@map("partner_connections")
+}
+
+model EcosystemStats {
+  id                   String   @id @default(cuid())
+  totalPartners        Int      @default(0)
+  activeConnections    Int      @default(0)
+  credentialExchanges  Int      @default(0)
+  verificationRequests Int      @default(0)
+  updatedAt            DateTime @updatedAt
+  
+  @@map("ecosystem_stats")
+}
+
+model DIDDocument {
+  id                   String              @id @default(cuid())
+  did                  String              @unique
+  document             Json
+  method               String              // did:web, did:key, etc.
+  controller           String?
+  status               String              @default("active") // active, deactivated, revoked
+  userId               String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  
+  user                 User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  keys                 CryptographicKey[]
+  issuedCredentials    Credential[]        @relation("IssuerDID")
+  
+  @@map("did_documents")
+}
+
+model CryptographicKey {
+  id                   String              @id @default(cuid())
+  keyId                String              // Key identifier within DID document
+  type                 String              // Ed25519VerificationKey2020, etc.
+  controller           String              // DID that controls this key
+  publicKeyMultibase   String              // Public key in multibase format
+  privateKeyMultibase  String?             // Private key (encrypted)
+  purpose              String[]            // authentication, assertionMethod, etc.
+  didDocumentId        String
+  status               String              @default("active")
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  
+  didDocument          DIDDocument         @relation(fields: [didDocumentId], references: [id], onDelete: Cascade)
+  
+  @@unique([didDocumentId, keyId])
+  @@map("cryptographic_keys")
+}
+
+model CredentialSchema {
+  id                   String              @id @default(cuid())
+  name                 String
+  version              String              @default("1.0.0")
+  description          String?
+  schema               Json                // JSON Schema definition
+  context              String[]            // JSON-LD contexts
+  type                 String[]            // Credential types
+  status               String              @default("active")
+  authorId             String?
+  isPublic             Boolean             @default(false)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  
+  author               User?               @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  credentials          Credential[]        @relation("CredentialSchema")
+  templates            CredentialTemplate[]
+  
+  @@unique([name, version])
+  @@map("credential_schemas")
+}
+
+model CredentialTemplate {
+  id                   String              @id @default(cuid())
+  name                 String
+  description          String?
+  schemaId             String
+  template             Json                // Template structure
+  defaultValues        Json?               // Default field values
+  requiredFields       String[]            // Required field names
+  status               String              @default("active")
+  authorId             String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  
+  schema               CredentialSchema    @relation(fields: [schemaId], references: [id], onDelete: Cascade)
+  author               User?               @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  
+  @@map("credential_templates")
+}
+
+model CredentialStatus {
+  id                   String              @id @default(cuid())
+  credentialId         String              @unique
+  status               String              @default("issued") // issued, suspended, revoked
+  statusReason         String?
+  revocationDate       DateTime?
+  suspensionDate       DateTime?
+  statusListIndex      Int?                // For status list 2021
+  statusListCredential String?             // Reference to status list credential
+  updatedAt            DateTime            @updatedAt
+  
+  credential           Credential          @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+  
+  @@map("credential_status")
+}
+
+model PresentationRequest {
+  id                   String              @id @default(cuid())
+  name                 String
+  description          String?
+  requesterId          String
+  query                Json                // Presentation definition
+  callbackUrl          String?
+  expiresAt            DateTime?
+  status               String              @default("active")
+  qrCode               String?             // QR code data
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  
+  requester            User                @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  submissions          PresentationSubmission[]
+  
+  @@map("presentation_requests")
+}
+
+model PresentationSubmission {
+  id                   String              @id @default(cuid())
+  requestId            String
+  submitterId          String?
+  presentation         Json                // Verifiable Presentation
+  status               String              @default("pending") // pending, verified, rejected
+  verificationResult   Json?
+  verifiedAt           DateTime?
+  submittedAt          DateTime            @default(now())
+  
+  request              PresentationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  submitter            User?               @relation(fields: [submitterId], references: [id], onDelete: SetNull)
+  
+  @@map("presentation_submissions")
+}
+
+model Webhook {
+  id                   String              @id @default(cuid())
+  name                 String
+  url                  String
+  events               String[]            // Events to subscribe to
+  isActive             Boolean             @default(true)
+  secret               String?             // Webhook signing secret
+  headers              Json?               // Custom headers
+  retryCount           Int                 @default(3)
+  timeout              Int                 @default(30) // Timeout in seconds
+  status               String              @default("active") // active, inactive, failed
+  lastTriggered        DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  
+  logs                 WebhookLog[]
+  
+  @@unique([url])
+  @@map("webhooks")
+}
+
+model WebhookLog {
+  id                   String              @id @default(cuid())
+  webhookId            String
+  event                String              // Event that triggered the webhook
+  url                  String              // URL that was called
+  status               String              // success, failed, pending
+  statusCode           Int?                // HTTP status code
+  response             String?             // Response body
+  error                String?             // Error message if failed
+  retryCount           Int                 @default(0)
+  timestamp            DateTime            @default(now())
+  
+  webhook              Webhook             @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  
+  @@map("webhook_logs")
+}
+
+model Organization {
+  id                   String              @id @default(cuid())
+  name                 String
+  description          String?
+  type                 String              @default("Business") // Enterprise, Business, Startup, Non-profit, Educational
+  logo                 String?             // Logo URL or base64
+  website              String?
+  email                String?
+  phone                String?
+  address              String?
+  status               String              @default("active") // active, suspended, inactive
+  settings             Json?               // Organization-specific settings
+  did                  String?             @unique // Organization DID
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  
+  members              OrganizationMember[]
+  invitations          OrganizationInvitation[]
+  apiKeys              OrganizationApiKey[]
+  activityLogs         ActivityLog[]
+  
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id                   String              @id @default(cuid())
+  organizationId       String
+  userId               String
+  role                 String              @default("member") // owner, admin, developer, analyst, viewer, member
+  permissions          String[]            // Specific permissions
+  status               String              @default("active") // active, suspended, pending
+  joinedAt             DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  
+  organization         Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([organizationId, userId])
+  @@map("organization_members")
+}
+
+model OrganizationInvitation {
+  id                   String              @id @default(cuid())
+  organizationId       String
+  email                String
+  role                 String              @default("member")
+  permissions          String[]            // Specific permissions
+  invitedBy            String              // User ID who sent the invitation
+  message              String?             // Personal message
+  token                String              @unique // Invitation token
+  status               String              @default("pending") // pending, accepted, rejected, expired
+  expiresAt            DateTime
+  acceptedAt           DateTime?
+  rejectedAt           DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  
+  organization         Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  inviter              User                @relation("InvitationsSent", fields: [invitedBy], references: [id], onDelete: Cascade)
+  
+  @@map("organization_invitations")
+}
+
+model OrganizationApiKey {
+  id                   String              @id @default(cuid())
+  organizationId       String
+  name                 String
+  description          String?
+  keyHash              String              @unique // Hashed API key
+  prefix               String              // First few characters for identification
+  permissions          String[]            // API permissions
+  rateLimit            Int?                // Requests per minute
+  isActive             Boolean             @default(true)
+  lastUsed             DateTime?
+  expiresAt            DateTime?
+  createdBy            String              // User ID who created the key
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  
+  organization         Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  creator              User                @relation("ApiKeysCreated", fields: [createdBy], references: [id], onDelete: Cascade)
+  
+  @@map("organization_api_keys")
+}
+
+model ActivityLog {
+  id                   String              @id @default(cuid())
+  organizationId       String?
+  userId               String?
+  action               String              // Action performed
+  resource             String?             // Resource affected
+  resourceId           String?             // ID of the resource
+  details              Json?               // Additional details
+  ipAddress            String?
+  userAgent            String?
+  status               String              @default("success") // success, failed, warning
+  timestamp            DateTime            @default(now())
+  
+  organization         Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  user                 User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([organizationId, timestamp])
+  @@index([userId, timestamp])
+  @@index([action, timestamp])
+  @@map("activity_logs")
+}
