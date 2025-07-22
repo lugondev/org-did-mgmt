@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 /**
  * Middleware to protect routes that require authentication
  * Redirects unauthenticated users to sign-in page
+ * TEMPORARILY DISABLED - allows access to all pages without authentication
  */
 export default withAuth(
   function middleware(req) {
@@ -13,16 +14,19 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        // Check if user is authenticated
-        const isAuthenticated = !!token
+        // TEMPORARILY DISABLED AUTHENTICATION - allow all access
+        return true
         
-        // Allow access to auth pages without authentication
-        if (req.nextUrl.pathname.startsWith('/auth/')) {
-          return true
-        }
-        
-        // Require authentication for all other protected routes
-        return isAuthenticated
+        // Original authentication logic (commented out)
+        // const isAuthenticated = !!token
+        // 
+        // // Allow access to auth pages without authentication
+        // if (req.nextUrl.pathname.startsWith('/auth/')) {
+        //   return true
+        // }
+        // 
+        // // Require authentication for all other protected routes
+        // return isAuthenticated
       },
     },
     pages: {
